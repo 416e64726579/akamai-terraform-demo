@@ -1,9 +1,12 @@
-variable "hostname" {
-  type = string
+variable "hostnames" {
+  type        = list(string)
+  description = "The hostnames associated with the security configuration."
 }
 variable "akamai_group" {
-  type = string
+  type        = string
+  description = "Akamai Group Name"
 }
 variable "contract_id" {
-  type = string
+  type        = string
+  description = "Akamai Contract ID"
 }

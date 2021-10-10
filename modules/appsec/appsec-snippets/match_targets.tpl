@@ -16,9 +16,7 @@
   "filePaths": [
     "/*"
   ],
-  "hostnames": [
-    "${hostname}"
-  ],
+  "hostnames": "${jsonencode(hostnames)}",
   "isNegativeFileExtensionMatch": false,
   "isNegativePathMatch": false,
   "securityPolicy": {

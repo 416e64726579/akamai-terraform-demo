@@ -1,9 +1,9 @@
-output "hostname" {
-  value = akamai_property.akamai_property.name
+output "this_property_hostnames" {
+  value = jsondecode(data.vault_generic_secret.property_tfvars.data_json).hostnames
 }
-output "akamai_group" {
-  value = data.akamai_group.group.id
+output "this_akamai_group" {
+  value = data.akamai_group.this.id
 }
-output "contract_id" {
-  value = data.akamai_group.group.contract_id
+output "this_contract_id" {
+  value = jsondecode(data.vault_generic_secret.property_tfvars.data_json).contract_id
 }

@@ -15,8 +15,10 @@ variable "cert_provisioning_type" {
   default = "CPS_MANAGED"
 }
 variable "vault_token" {
-  type = string
+  type      = string
+  sensitive = true
 }
 variable "vault_address" {
-  type = string
+  type      = string
+  sensitive = true
 }
