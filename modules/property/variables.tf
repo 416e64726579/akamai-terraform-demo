@@ -1,12 +1,12 @@
 variable "edgerc" {
-    type = string
+  type = string
 }
 variable "ip_behavior" {
-    type = string
+  type = string
 }
 variable "rule_format" {
-    type = string
+  type = string
 }
 variable "cert_provisioning_type" {
-    type = string
+  type = string
 }

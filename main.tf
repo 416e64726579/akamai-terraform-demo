@@ -13,10 +13,10 @@ terraform {
     scheme  = "https"
     path    = "global/terraform.tfstate"
   }
-  
+
   required_providers {
     akamai = {
-      source = "akamai/akamai" 
+      source = "akamai/akamai"
     }
   }
   required_version = ">= 0.13"
@@ -24,27 +24,27 @@ terraform {
 
 provider "vault" {
   address = var.vault_address
-  token = var.vault_token
+  token   = var.vault_token
 }
 
 provider "akamai" {
-  edgerc = var.edgerc
+  edgerc         = var.edgerc
   config_section = "default"
 }
 
 module "property" {
-  source = "./modules/property"
-  edgerc = var.edgerc
-  ip_behavior = var.ip_behavior
-  rule_format = var.rule_format
+  source                 = "./modules/property"
+  edgerc                 = var.edgerc
+  ip_behavior            = var.ip_behavior
+  rule_format            = var.rule_format
   cert_provisioning_type = var.cert_provisioning_type
 }
 
 module "appsec" {
-  source = "./modules/appsec"
-  hostname = module.property.hostname
+  source       = "./modules/appsec"
+  hostname     = module.property.hostname
   akamai_group = module.property.akamai_group
-  contract_id = module.property.contract_id
-  depends_on = [module.property]
+  contract_id  = module.property.contract_id
+  depends_on   = [module.property]
 }
 

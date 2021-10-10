@@ -1,9 +1,9 @@
 variable "hostname" {
-    type = string
+  type = string
 }
 variable "akamai_group" {
-    type = string
+  type = string
 }
 variable "contract_id" {
-    type = string
+  type = string
 }

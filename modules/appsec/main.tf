@@ -10,8 +10,8 @@ data "vault_generic_secret" "appsec_tfvars" {
 
 terraform {
   required_providers {
-    akamai = { 
-      source = "akamai/akamai" 
+    akamai = {
+      source = "akamai/akamai"
     }
   }
   required_version = ">= 0.13"
@@ -19,183 +19,183 @@ terraform {
 
 resource "akamai_appsec_configuration" "akamai_appsec" {
   contract_id = replace(var.contract_id, "ctr_", "")
-  group_id  = replace(var.akamai_group, "grp_", "")
-  name = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).configuration_name
+  group_id    = replace(var.akamai_group, "grp_", "")
+  name        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).configuration_name
   description = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).configuration_description
-  host_names = [ var.hostname ]
+  host_names  = [var.hostname]
 }
 
 resource "akamai_appsec_security_policy" "security_policy" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_name = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).policy_name
+  config_id              = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_name   = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).policy_name
   security_policy_prefix = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).policy_prefix
 }
 
 resource "akamai_appsec_advanced_settings_pragma_header" "pragma_header" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
+  config_id          = akamai_appsec_configuration.akamai_appsec.config_id
   security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  pragma_header = file("${path.module}/appsec-snippets/pragma_header.json")
+  pragma_header      = file("${path.module}/appsec-snippets/pragma_header.json")
 }
 
 resource "akamai_appsec_match_target" "match_target" {
   config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  match_target = templatefile("${path.module}/appsec-snippets/match_targets.json", { 
-      config_id = akamai_appsec_configuration.akamai_appsec.config_id, 
-      hostname = var.hostname, 
-      policy_id = akamai_appsec_security_policy.security_policy.security_policy_id 
-      securitybypass_list = akamai_networklist_network_list.SECURITYBYPASSLIST.id
-      } 
-    )
+  match_target = templatefile("${path.module}/appsec-snippets/match_targets.json", {
+    config_id           = akamai_appsec_configuration.akamai_appsec.config_id,
+    hostname            = var.hostname,
+    policy_id           = akamai_appsec_security_policy.security_policy.security_policy_id
+    securitybypass_list = akamai_networklist_network_list.SECURITYBYPASSLIST.id
+    }
+  )
 }
 
 resource "akamai_networklist_network_list" "IPBLOCKLIST" {
-  name = "IPBLOCKLIST"
-  type = "IP"
+  name        = "IPBLOCKLIST"
+  type        = "IP"
   description = "IPBLOCKLIST"
-  list = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ipblock_list
-  mode = "REPLACE"
+  list        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ipblock_list
+  mode        = "REPLACE"
 }
 
 resource "akamai_networklist_network_list" "IPBLOCKLISTEXCEPTIONS" {
-  name = "IPBLOCKLISTEXCEPTIONS"
-  type = "IP"
+  name        = "IPBLOCKLISTEXCEPTIONS"
+  type        = "IP"
   description = "IPBLOCKLISTEXCEPTIONS"
-  list = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ipblock_list_exceptions
-  mode = "REPLACE"
+  list        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ipblock_list_exceptions
+  mode        = "REPLACE"
 }
 
 resource "akamai_networklist_network_list" "GEOBLOCKLIST" {
-  name = "GEOBLOCKLIST"
-  type = "GEO"
+  name        = "GEOBLOCKLIST"
+  type        = "GEO"
   description = "GEOBLOCKLIST"
-  list = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).geoblock_list
-  mode = "REPLACE"
+  list        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).geoblock_list
+  mode        = "REPLACE"
 }
 
 resource "akamai_networklist_network_list" "SECURITYBYPASSLIST" {
-  name = "SECURITYBYPASSLIST"
-  type = "IP"
+  name        = "SECURITYBYPASSLIST"
+  type        = "IP"
   description = "SECURITYBYPASSLIST"
-  list = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).securitybypass_list
-  mode = "REPLACE"
+  list        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).securitybypass_list
+  mode        = "REPLACE"
 }
 
-resource  "akamai_appsec_ip_geo" "ip_geo_block" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  mode = "block"
-  ip_network_lists = [ akamai_networklist_network_list.IPBLOCKLIST.id ]
-  geo_network_lists = [ akamai_networklist_network_list.GEOBLOCKLIST.id ]
-  exception_ip_network_lists = [ akamai_networklist_network_list.IPBLOCKLISTEXCEPTIONS.id ]
+resource "akamai_appsec_ip_geo" "ip_geo_block" {
+  config_id                  = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id         = akamai_appsec_security_policy.security_policy.security_policy_id
+  mode                       = "block"
+  ip_network_lists           = [akamai_networklist_network_list.IPBLOCKLIST.id]
+  geo_network_lists          = [akamai_networklist_network_list.GEOBLOCKLIST.id]
+  exception_ip_network_lists = [akamai_networklist_network_list.IPBLOCKLISTEXCEPTIONS.id]
 }
 
 resource "akamai_appsec_rate_policy" "rate_policy_page_view_requests" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  rate_policy =  file("${path.module}/appsec-snippets/rate-policies/rate_policy_page_view_requests.json")
+  config_id   = akamai_appsec_configuration.akamai_appsec.config_id
+  rate_policy = file("${path.module}/appsec-snippets/rate-policies/rate_policy_page_view_requests.json")
 }
 
-resource  "akamai_appsec_rate_policy_action" "appsec_rate_policy_page_view_requests_action" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
+resource "akamai_appsec_rate_policy_action" "appsec_rate_policy_page_view_requests_action" {
+  config_id          = akamai_appsec_configuration.akamai_appsec.config_id
   security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  rate_policy_id = akamai_appsec_rate_policy.rate_policy_page_view_requests.rate_policy_id
-  ipv4_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_page_view_requests_action
-  ipv6_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_page_view_requests_action
+  rate_policy_id     = akamai_appsec_rate_policy.rate_policy_page_view_requests.rate_policy_id
+  ipv4_action        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_page_view_requests_action
+  ipv6_action        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_page_view_requests_action
 }
 
 resource "akamai_appsec_rate_policy" "rate_policy_origin_error" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  rate_policy =  file("${path.module}/appsec-snippets/rate-policies/rate_policy_origin_error.json")
+  config_id   = akamai_appsec_configuration.akamai_appsec.config_id
+  rate_policy = file("${path.module}/appsec-snippets/rate-policies/rate_policy_origin_error.json")
 }
 
-resource  "akamai_appsec_rate_policy_action" "appsec_rate_policy_origin_error_action" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
+resource "akamai_appsec_rate_policy_action" "appsec_rate_policy_origin_error_action" {
+  config_id          = akamai_appsec_configuration.akamai_appsec.config_id
   security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  rate_policy_id = akamai_appsec_rate_policy.rate_policy_origin_error.rate_policy_id
-  ipv4_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_origin_error_action
-  ipv6_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_origin_error_action
+  rate_policy_id     = akamai_appsec_rate_policy.rate_policy_origin_error.rate_policy_id
+  ipv4_action        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_origin_error_action
+  ipv6_action        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_origin_error_action
 }
 
 resource "akamai_appsec_rate_policy" "rate_policy_post_requests" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  rate_policy =  file("${path.module}/appsec-snippets/rate-policies/rate_policy_post_requests.json")
+  config_id   = akamai_appsec_configuration.akamai_appsec.config_id
+  rate_policy = file("${path.module}/appsec-snippets/rate-policies/rate_policy_post_requests.json")
 }
 
-resource  "akamai_appsec_rate_policy_action" "appsec_rate_policy_post_requests_action" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
+resource "akamai_appsec_rate_policy_action" "appsec_rate_policy_post_requests_action" {
+  config_id          = akamai_appsec_configuration.akamai_appsec.config_id
   security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  rate_policy_id = akamai_appsec_rate_policy.rate_policy_post_requests.rate_policy_id
-  ipv4_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_post_requests_action
-  ipv6_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_post_requests_action
+  rate_policy_id     = akamai_appsec_rate_policy.rate_policy_post_requests.rate_policy_id
+  ipv4_action        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_post_requests_action
+  ipv6_action        = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).ratepolicy_post_requests_action
 }
 
 resource "akamai_appsec_slow_post" "slow_post" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  slow_rate_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).slow_post_protection_action
-  slow_rate_threshold_rate = 10
+  config_id                  = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id         = akamai_appsec_security_policy.security_policy.security_policy_id
+  slow_rate_action           = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).slow_post_protection_action
+  slow_rate_threshold_rate   = 10
   slow_rate_threshold_period = 60
 }
 
 resource "akamai_appsec_attack_group" "attack_group_web_attack_tool" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "TOOL"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "TOOL"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_web_attack_tool_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_web_attack_tool_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_web_protocol_attack" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "PROTOCOL"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "PROTOCOL"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_web_protocol_attack_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_web_protocol_attack_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_sql_injection" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "SQL"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "SQL"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_sql_injection_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_sql_injection_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_cross_site_scripting" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "XSS"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "XSS"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_cross_site_scripting_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_cross_site_scripting_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_local_file_inclusion" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "LFI"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "LFI"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_local_file_inclusion_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_local_file_inclusion_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_remote_file_inclusion" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "RFI"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "RFI"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_remote_file_inclusion_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_remote_file_inclusion_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_command_injection" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "CMDI"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "CMDI"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_command_injection_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_command_injection_exception.json")
 }
 
 resource "akamai_appsec_attack_group" "attack_group_web_platform_attack" {
-  config_id = akamai_appsec_configuration.akamai_appsec.config_id
-  security_policy_id = akamai_appsec_security_policy.security_policy.security_policy_id
-  attack_group = "PLATFORM"
+  config_id           = akamai_appsec_configuration.akamai_appsec.config_id
+  security_policy_id  = akamai_appsec_security_policy.security_policy.security_policy_id
+  attack_group        = "PLATFORM"
   attack_group_action = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json).attack_group_web_platform_attack_action
   condition_exception = file("${path.module}/appsec-snippets/attack-groups/attack_group_web_platform_attack_exception.json")
 }
