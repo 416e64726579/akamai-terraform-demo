@@ -11,7 +11,7 @@ terraform {
   backend "consul" {
     address = "consul.anythings.ga"
     scheme  = "https"
-    path    = "global/terraform.tfstate"
+    path    = "tfstate"
   }
 
   required_providers {
