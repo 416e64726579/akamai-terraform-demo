@@ -10,3 +10,7 @@ variable "contract_id" {
   type        = string
   description = "Akamai Contract ID"
 }
+variable "appsec_vars" {
+  type        = any
+  description = "Object of security variables"
+}

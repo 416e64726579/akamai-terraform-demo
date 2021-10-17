@@ -43,15 +43,39 @@ provider "akamai" {
   config_section = "default"
 }
 
+
+#
+# Initialize sensitive property variables from Vault
+#
+data "vault_generic_secret" "property_tfvars" {
+  path = "tf/property.tfvars.json"
+}
+
+locals {
+  prop_vars = jsondecode(data.vault_generic_secret.property_tfvars.data_json)
+}
+
+#
+# Initialize sensitive appsec variables from Vault
+#
+data "vault_generic_secret" "appsec_tfvars" {
+  path = "tf/appsec.tfvars.json"
+}
+
+locals {
+  appsec_vars = jsondecode(data.vault_generic_secret.appsec_tfvars.data_json)
+}
+
+
 #
 # Property module spins up delivery part of Akamai (Ion Premier)
 #
 module "property" {
   source                 = "./modules/property"
-  edgerc                 = var.edgerc
   ip_behavior            = var.ip_behavior
   rule_format            = var.rule_format
   cert_provisioning_type = var.cert_provisioning_type
+  prop_vars              = local.prop_vars
 }
 
 #
@@ -59,9 +83,11 @@ module "property" {
 #
 module "appsec" {
   source       = "./modules/appsec"
-  hostnames    = module.property.this_property_hostnames
   akamai_group = module.property.this_akamai_group
-  contract_id  = module.property.this_contract_id
-  depends_on   = [module.property]
+  hostnames    = local.prop_vars.hostnames
+  contract_id  = local.prop_vars.contract_id
+  appsec_vars  = local.appsec_vars
+
+  depends_on = [module.property]
 }
 

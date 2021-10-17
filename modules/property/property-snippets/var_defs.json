@@ -1,0 +1,12 @@
+{
+    "definitions": {
+        "cp_code": {
+            "type": "number",
+            "default": 0
+        },
+        "origin_hostname": {
+            "type": "string",
+            "default": ""
+        }
+    }
+}
